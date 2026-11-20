@@ -7,6 +7,25 @@
 #let Ips = none
 #show: doc => template(doc, footer: "水文气象学", header: "")
 
+= 操作步骤与存在的问题
+
+== 1步骤
+
++ 使用AI通读 `component.R`，识别出四个函数：`RemoveSeasonal`、`LS_MultiBreaks`、`LS_OneBreak`、`lm_solve`。
++ 逐函数理解：去季节（按月日分组求均值再求距平）、分段回归（同斜率不同截距，构造指示变量设计矩阵）、最小二乘求解（`.lm.fit`）。
++ 对照 `docs` 下已有 `note_01.typ` 的模板与排版风格，保持标题、代码块、公式写法一致。
++ 为每个函数配公式 + R 代码 + 简要说明，整理成笔记。
+
+== 2存在的问题（AI发现）
+
++ 文档与代码不一致：`LS_OneBreak` 的 `@param` 写 `T_anorm`，实参却是 `X`；注释 `T_anorm = T - mean(T)` 但代码未中心化。
++ 命名不统一：`Y/X` 大小写混用，`anorm` 与 `anomaly`、`T_anorm` 与 `X` 并存。
++ 拼写错误：`perid` 应为 `period`。
++ 数值稳健性：`t_mmdd == inds[i]` 用浮点相等比较，非整数或浮点编码时有精度风险，宜用 `match()` 或整数编码。
++ 全 `NA` 组未处理：某月日样本全为 `NA` 时 `mean(..., na.rm = TRUE)` 返回 `NaN`，距平随之失效。
++ `lm_solve` 未处理 `NA` 与秩亏设计矩阵，`.lm.fit` 遇奇异矩阵可能报错。
++ 性能：`RemoveSeasonal` 逐组循环，可改用 `tapply` / `aggregate` 向量化。
+
 = component.R 笔记
 
 == 1 RemoveSeasonal：去季节
